@@ -1,0 +1,19 @@
+---
+output: rmarkdown::github_document
+---
+
+
+## unbiasedpoisson
+
+### Installation
+
+The package can be installed from R via:
+```{r install, eval=FALSE}
+# install.packages("devtools")
+devtools::install_github("pierrejacob/unbiasedpoisson")
+```
+
+It depends on the packages Rcpp, RcppEigen, lubridate, which can be installed via:
+```{r installdependencies, eval=FALSE}
+install.packages(c("Rcpp", "RcppEigen", "lubridate"))
+```
