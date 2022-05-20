@@ -1,0 +1,244 @@
+---
+title: 'tutorial: main functions'
+author: '-~-'
+date: "May 2022"
+output: html_document
+---
+
+```{r setup1, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+This R Markdown file shows how to use some of the main functions implemented
+in this package.
+
+## AR(1) model
+
+We consider an AR(1) model defined as
+$$ X_t = \phi X_{t-1} + W_t,$$
+with $W_t$ i.i.d. $\text{Normal}(0,1^2)$, and $X_{0}\sim \text{Normal}(0,4^2)$. We consider the test function $h:x\mapsto 1(x>1)$. The invariant distribution $\pi$ is $\text{Normal}(0,1/(1-\phi^2))$.
+
+
+In the following we show how coupled chains can be employed to estimate the solution of the Poisson equation:
+$$ \tilde{h} - P\tilde{h} = h - \pi(h),$$
+given by 
+$$ \tilde{h}:x \mapsto \sum_{t\geq 0} \{P^t h(x) - P^t h(y)\},$$
+where we define $y$ as a fixed value, $-2$, below.
+Afterward we look at how we can estimate the asymptotic variance $v(P,h)$ in the Central Limit Theorem (CLT):
+$$ \sqrt{t}\left(t^{-1}\sum_{t=0}^{t-1} h(X_t) - \pi(h)\right) \longrightarrow_{t\to\infty} \text{Normal}(0,v(P,h)).$$
+
+Let's start by loading the package, and a few other.
+
+```{r setup, message=F, warning=F}
+rm(list = ls())
+library(unbiasedpoisson)
+library(doParallel)
+library(doRNG)
+library(dplyr)
+library(ggplot2)
+theme_set(theme_minimal())
+# register parallel cores
+registerDoParallel(cores = detectCores()-2)
+# set RNG seed
+set.seed(1)
+```
+
+We define the AR(1) model and a coupling of it.
+
+```{r}
+# autoregressive parameter
+phi <- 0.99
+
+## Markov kernel
+single_kernel <- function(state){
+  return(list(position = phi * state$position + rnorm(1, 0, 1)))
+}
+
+## Coupled Markov kernel
+## using "reflection-maximal coupling" implemented in the function 'rnorm_reflectionmax'
+coupled_kernel <- function(state1, state2){
+  nextvalues <- unbiasedpoisson::rnorm_reflectionmax(mu1 = phi * state1$position, 
+                                                     mu2 = phi * state2$position, 
+                                                     sigma = 1)
+  return(list(state1 = list(position = nextvalues$xy[1]), 
+              state2 = list(position = nextvalues$xy[2]), 
+              identical = nextvalues$identical))
+}
+
+## initial distribution Normal(0, 4^2)
+rinit <- function(position){
+  if (missing(position)){
+    position <- rnorm(1, mean = 0, sd = 4)
+  }
+  return(list(position = position))
+}
+
+## test function x \mapsto 1(x>1)
+h <- function(x) (x > 1)
+
+## arbitrary point 'y' used in the definition of the fishy function
+y <- -2
+state_y <- list(position = y)
+```
+
+What is the reflection-maximal coupling mentioned above?
+If we have two variables
+$X\sim \text{Normal}(\mu_1,\sigma^2)$ and
+$Y\sim \text{Normal}(\mu_2,\sigma^2)$ then the reflection-maximal coupling is the following procedure:
+
+- Let $z=\sigma^{-1}(\mu_{1}-\mu_{2})$.
+
+- Sample $\dot{X}\sim\mathcal{N}(0,1)$, and $W\sim\text{Uniform}(0,1)$.
+
+- Set $X = \mu_1 + \sigma \dot{X}$.
+
+- If $W\leq \varphi(\dot{X}+z)/\varphi(\dot{X})$, set $Y=X$;
+      else set $Y=\mu_2-\sigma \dot{X}$.
+
+- Return $(X,Y)$.
+
+The generated pair $(X,Y)$ satisfies the marginal distributions
+but is also such that $\{X=Y\}$ occurs with maximal probability. The cost
+of the above procedure is deterministic.
+
+
+## Meeting times
+
+We can now run lagged chains and see how long they take to meet,
+which gives us upper bounds on the convergence of the chain to its stationary distribution.
+Here we rely on the approach described in
+
+- Biswas, N., Jacob, P. E. and Vanetti, P. (2019), Estimating convergence of Markov chains with L-lag couplings, in ‘Advances in Neural Information Processing Systems’, pp. 7389–7399.
+
+```{r tvupperbounds, message=F, warning=F, cache=T}
+## number of independent repeats
+nrep <- 1e2
+## choice of lag
+lag <- 300
+## sample i.i.d. meeting times
+meetingtime_runs <- foreach (irep = 1:nrep) %dorng% {
+  sample_meetingtime(single_kernel, coupled_kernel, rinit, lag = lag)
+}
+meetingtimes <- sapply(meetingtime_runs, function(x) x$meetingtime)
+niterations <- 1e3
+ubounds <- sapply(1:niterations, function(t) tv_upper_bound(unlist(meetingtimes), lag, t))
+setmytheme()
+g_tvbounds <- qplot(x = 1:niterations, y = ubounds, geom = "line") + 
+  ylab("TV distance") + xlab("iteration")
+g_tvbounds
+```
+## Fishy function estimation
+
+We set a grid of values $x \in (-5,+5)$
+and for each value, we generate unbiased estimators of the fishy function associated
+with $h:x\mapsto 1(x>1)$.
+
+```{r fishyestimation, message=F, warning=F, cache=T}
+## obtain 'nrep' unbiased estimators for a grid of value of x
+nrep <- 1e3
+xseq <- seq(from = -5, to = 5, length.out = 25)
+df <- data.frame()
+for (x in xseq){
+  state_x <- rinit(x)
+  state_y <- rinit(y)
+  res_ <- foreach(irep = 1:nrep) %dorng% {
+    ## start two chains, one at x and one at y
+    sample_unbiasedfishy(coupled_kernel, h, state_x, state_y)
+  }
+  df <- rbind(df, data.frame(x = x, estimator = sapply(res_, function(x) x$estimator)))
+}
+## plot solution of Poisson equation associated with h
+ghtilde <- ggplot(df, aes(x = x, y = estimator)) + geom_hline(yintercept = 0, linetype = 1, alpha = 0.2) +
+  geom_vline(xintercept = 0, linetype = 1) + 
+  geom_smooth(colour = "black") + xlab('x') + ylab("fishy function")
+ghtilde
+```
+
+We can trace the (approximate) second moment of the estimator of the fishy function against $x$.
+
+```{r secondmoment, message=F, warning=F, cache = T}
+## second moment
+ghtildesquare <- ggplot(df, aes(x = x, y = estimator^2)) + geom_hline(yintercept = c(0), linetype = 1, alpha = 0.2) +
+  geom_smooth(colour = 'black') + xlab('x') + ylab("second moment")
+ghtildesquare
+```
+
+What happens if we randomize $y$ instead of fixing it to zero?
+We can estimate the associated fishy function as follows.
+
+```{r fishyestimation2, message=F, warning=F, cache=T}
+## obtain 'nrep' unbiased estimators for a grid of value of x
+df2 <- data.frame()
+for (x in xseq){
+  # set x in the grid
+  state_x <- rinit(x)
+  res_ <- foreach(irep = 1:nrep, .combine = c) %dorng% {
+    # randomize y in each repeat
+    state_y <- rinit()
+    # set meeting time to infinity
+    meetingtime <- Inf
+    # keep track of time
+    time <- 0
+    # estimator starts with h(X_0) - h(Y_0)
+    estimator_ <- h(state_x$position) - h(state_y$position)
+    # run until the meeting time
+    while (is.infinite(meetingtime)){
+      time <- time + 1
+      # sample new states using coupled kernel
+      coupledstates <- coupled_kernel(state_x, state_y)
+      state_x <- coupledstates$state1
+      state_y <- coupledstates$state2
+      # update estimator with increment: h(X_t) - H(Y_t)
+      estimator_ <- estimator_ + h(state_x$position) - h(state_y$position)
+      # stop if meeting occurred
+      if (coupledstates$identical) meetingtime <- time
+    }
+    # return estimator
+    estimator_
+  }
+  df2 <- rbind(df2, data.frame(x = x, estimator = res_))
+}
+## plot solution of Poisson equation associated with h
+ghtilde + geom_smooth(data = df2, colour = 'red')
+```
+
+We see that the two fishy functions seem to be equal up to
+an additive constant, which is expected from Lemma 21.2.2
+in 
+
+- Douc, R., Moulines, E., Priouret, P. and Soulier, P. (2018), Markov chains, Springer International Publishing.
+
+## Asymptotic variance estimation
+
+Here we know that the asymptotic variance in the CLT 
+is equal to `r 1/(1-phi)^2`. The package provides two functions
+that generate unbiased estimators of this asymptotic variance,
+`sample_unbiasedvar` and `sample_unbiasedvar_reservoir`, the latter
+being lighter memory-wise thanks to the use of reservoir sampling.
+
+```{r avar, cache = TRUE}
+## large quantile of meeting times
+k <- 300
+## 5 times k
+m <- 5*k
+## large quantile of meeting times
+lag <- 300
+## number of independent repeats
+nrep <- 1e2
+## number of fishy function evals per signed measure
+natoms <- 50
+## generate i.i.d. unbiased estimator of v(P,h)
+uavar <-  foreach(irep = 1:nrep) %dorng% {
+  sample_unbiasedvar(single_kernel, coupled_kernel, rinit, h = h, k = k, m = m, lag = lag, x_0 = y, natoms = natoms)
+}
+
+results <- data.frame(rep = 1:nrep,
+                      avar_estimates = sapply(uavar, function(x) x$estimator),
+                      cost = sapply(uavar, function(x) x$cost))
+cat("asymptotic variance:", format(mean(results$avar_estimates), digits = 3),"\n",
+"+ or -", format(1.96*sd(results$avar_estimates)/sqrt(nrep), digits = 3)," with 95% probability,\n",
+"based on", nrep, "independent runs of the proposed estimators.\n")
+```
+
+We can check this against long runs of MCMC.
+
