@@ -103,14 +103,15 @@ for (inreta in seq_along(nretas)){
 load(file = "output/highdimreg.uavar.nreta.RData")
   
 length(results)
-results[[2]]
+results[[1]]
 
 names(results[[1]])
 results.df <- data.frame()
 # nretas <- c(1,3)
-for (nreta in nretas){
+for (inreta in seq_along(nretas)){
+  nreta <- nretas[inreta]
   results.df <- rbind(results.df, foreach(irep = 1:nrep, .combine=rbind) %do% {
-    run <- (results[[nreta]])[[irep]]
+    run <- (results[[inreta]])[[irep]]
     data.frame(nreta = nreta,
                natoms = natoms,
                rep = irep,

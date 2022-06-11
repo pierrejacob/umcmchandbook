@@ -9,4 +9,7 @@ src/*.so
 src/*.dll
 .DS_Store
 output/
+inst/backup/
+./inst/backup/
+./inst/backup/*
 inst_test/

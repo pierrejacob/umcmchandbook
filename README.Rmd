@@ -5,15 +5,32 @@ output: rmarkdown::github_document
 
 ## unbiasedpoisson
 
+This package contains scripts that generate
+the figures and tables of the article 
+"Solving the Poisson equation using coupled Markov chains"
+by Randal Douc, Pierre E. Jacob, Anthony Lee and Dootika Vats.
+
 ### Installation
 
 The package can be installed from R via:
 ```{r install, eval=FALSE}
-# install.packages("devtools")
+if (!require("devtools")) install.packages("devtools")
 devtools::install_github("pierrejacob/unbiasedpoisson")
 ```
 
-It depends on the packages Rcpp, RcppEigen, lubridate, which can be installed via:
+Most scripts depend on packages which can be installed via:
 ```{r installdependencies, eval=FALSE}
-install.packages(c("Rcpp", "RcppEigen", "lubridate"))
+if (!require("tidyverse")) install.packages("tidyverse")
+if (!require("doParallel")) install.packages("doParallel")
+if (!require("doRNG")) install.packages("doRNG")
+if (!require("latex2exp")) install.packages("latex2exp")
+if (!require("ggthemes")) install.packages("ggthemes")
 ```
+
+Some scripts also depend on the following packages:
+```{r installothers, eval=FALSE}
+if (!require("mcmcse")) install.packages("mcmcse")
+if (!require("fftwtools")) install.packages("fftwtools")
+if (!require("RcppArmadillo")) install.packages("RcppArmadillo")
+```
+
