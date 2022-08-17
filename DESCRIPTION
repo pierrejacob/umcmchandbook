@@ -2,7 +2,7 @@ Package: unbiasedpoisson
 Type: Package
 Title: Unbiased estimation of solution of Poisson equation
 Version: 1.0
-Date: 2022-05-15
+Date: 2022-08-17
 Author: - 
 Maintainer: Who to complain to <yourfault@somewhere.net>
 Description: More about what it does (maybe more than one line)
@@ -10,4 +10,4 @@ License: What license is it under?
 Depends: Rcpp, RcppEigen, tictoc
 Imports: Rcpp (>= 1.0.7), RcppEigen
 LinkingTo: Rcpp, RcppEigen
-RoxygenNote: 7.1.2
+RoxygenNote: 7.2.1

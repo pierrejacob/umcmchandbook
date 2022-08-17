@@ -74,7 +74,8 @@ sample_coupled_chains_and_fish <- function(single_kernel, coupled_kernel, rinit,
       weight_at_atoms[iatom] <- 1
     }
   }
-  # correction computes the sum of min(m-k+1, ceiling((t - k)/lag)) * (h(X_{t}) - h(Y_{t-lag})) for t=k+lag,..., tau - 1
+  # correction computes the sum of w_t * (h(X_{t}) - h(Y_{t-lag})) for t=k+lag,..., tau - 1
+  # where w_t = { floor((time-k) / lag) - ceiling(max(lag, time-m)/lag) + 1 } / (m-k+1)
   correction <- rep(0, dimh)
   correction_h2 <- rep(0, dimh)
   time <- 0
@@ -96,15 +97,17 @@ sample_coupled_chains_and_fish <- function(single_kernel, coupled_kernel, rinit,
     }
   }
   if (time >= k + lag){
-    correction <- correction + min(m-k+1, ceiling((time - k)/lag)) * (h(state1$position) - h(state2$position))
-    correction_h2 <- correction_h2 + min(m-k+1, ceiling((time - k)/lag)) * (h(state1$position)^2 - h(state2$position)^2)
+    correction <- correction + (floor((time-k) / lag) - ceiling(max(lag, time-m)/lag) + 1) * (h(state1$position) - h(state2$position))
+    correction_h2 <- correction_h2 + (floor((time-k) / lag) - ceiling(max(lag, time-m)/lag) + 1) * (h(state1$position)^2 - h(state2$position)^2)
+    # correction <- correction + min(m-k+1, ceiling((time - k)/lag)) * (h(state1$position) - h(state2$position))
+    # correction_h2 <- correction_h2 + min(m-k+1, ceiling((time - k)/lag)) * (h(state1$position)^2 - h(state2$position)^2)
     ## selected atoms might correspond to state1 or state2
     atomcounter <- atomcounter + 1
     for (iatom in 1:natoms){
       if (runif(1) < 1/atomcounter){ # reservoir sampling mechanism
         indexselectedatoms[iatom] <- atomcounter 
         selectedatoms[[iatom]] <- state1
-        weight_at_atoms[iatom] <- min(m-k+1, ceiling((time - k)/lag))
+        weight_at_atoms[iatom] <- (floor((time-k) / lag) - ceiling(max(lag, time-m)/lag) + 1)
       }
     }
     atomcounter <- atomcounter + 1
@@ -112,7 +115,7 @@ sample_coupled_chains_and_fish <- function(single_kernel, coupled_kernel, rinit,
       if (runif(1) < 1/atomcounter){ # reservoir sampling mechanism
         indexselectedatoms[iatom] <- atomcounter 
         selectedatoms[[iatom]] <- state2
-        weight_at_atoms[iatom] <- -min(m-k+1, ceiling((time - k)/lag))
+        weight_at_atoms[iatom] <- -(floor((time-k) / lag) - ceiling(max(lag, time-m)/lag) + 1)
       }
     }
   }
@@ -156,15 +159,17 @@ sample_coupled_chains_and_fish <- function(single_kernel, coupled_kernel, rinit,
         
       }
       if (time >= k + lag){ # update bias correction 
-        correction <- correction + min(m-k+1, ceiling((time - k)/lag)) * (h(state1$position) - h(state2$position))
-        correction_h2 <- correction_h2 + min(m-k+1, ceiling((time - k)/lag)) * (h(state1$position)^2 - h(state2$position)^2)
+        correction <- correction + (floor((time-k) / lag) - ceiling(max(lag, time-m)/lag) + 1) * (h(state1$position) - h(state2$position))
+        correction_h2 <- correction_h2 + (floor((time-k) / lag) - ceiling(max(lag, time-m)/lag) + 1) * (h(state1$position)^2 - h(state2$position)^2)
+        # correction <- correction + min(m-k+1, ceiling((time - k)/lag)) * (h(state1$position) - h(state2$position))
+        # correction_h2 <- correction_h2 + min(m-k+1, ceiling((time - k)/lag)) * (h(state1$position)^2 - h(state2$position)^2)
         ## selected atoms might correspond to state1 or state2
         atomcounter <- atomcounter + 1
         for (iatom in 1:natoms){
           if (runif(1) < 1/atomcounter){
             indexselectedatoms[iatom] <- atomcounter 
             selectedatoms[[iatom]] <- state1
-            weight_at_atoms[iatom] <- min(m-k+1, ceiling((time - k)/lag))
+            weight_at_atoms[iatom] <- (floor((time-k) / lag) - ceiling(max(lag, time-m)/lag) + 1)
           }
         }
         atomcounter <- atomcounter + 1
@@ -172,7 +177,7 @@ sample_coupled_chains_and_fish <- function(single_kernel, coupled_kernel, rinit,
           if (runif(1) < 1/atomcounter){
             indexselectedatoms[iatom] <- atomcounter 
             selectedatoms[[iatom]] <- state2
-            weight_at_atoms[iatom] <- -min(m-k+1, ceiling((time - k)/lag))
+            weight_at_atoms[iatom] <- -(floor((time-k) / lag) - ceiling(max(lag, time-m)/lag) + 1)
           }
         }
       }
