@@ -9,7 +9,7 @@ registerDoParallel(cores = 10)
 # set RNG seed
 set.seed(1)
 
-source("inst/highdimregfunctions.R")
+source("inst/highdimreg_functions.R")
 
 nmcmc <- 5e4
 nchains <- 10

@@ -45,15 +45,12 @@ sample_coupled_chains <- function(single_kernel, coupled_kernel, rinit, m = 1, l
   samples2 <- matrix(nrow = nrowsamples1-lag, ncol = dimstate)
   samples1[1,] <- state1$position
   samples2[1,] <- state2$position
-  # current_nsamples1 <- 1
   time <- 0
   for (t in 1:lag){
     time <- time + 1
     state1 <- single_kernel(state1)
     samples1[time+1,] <- state1$position
   }
-  # current_nsamples1 <- current_nsamples1 + 1
-  # iter <- 1
   meetingtime <- Inf
   while ((time < max(meetingtime, m)) && (time < max_iterations)){
     time <- time + 1 # time is lag+1,lag+2,...
@@ -77,13 +74,18 @@ sample_coupled_chains <- function(single_kernel, coupled_kernel, rinit, m = 1, l
     samples1[time+1,] <- state1$position
     samples2[time-lag+1,] <-   state2$position
   }
+  if (time == max_iterations){
+    print("error in sample_coupled_chains: time == max_iterations, still no meeting")
+    cat("state1 at position:", state1$position, "\n")
+    cat("state2 at position:", state2$position, "\n")
+    tictoc::tic.clear()
+    return(NULL)
+  }
   samples1 <- samples1[1:(time+1),,drop=F]
   samples2 <- samples2[1:(time-lag+1),,drop=F]
   cost <- lag + 2*(meetingtime - lag) + max(0, time - meetingtime)
   elapsed <- tictoc::toc(quiet = T)
   tictoc::tic.clear()
-  # currenttime <- Sys.time()
-  # elapsedtime <- as.numeric(lubridate::as.duration(lubridate::ymd_hms(currenttime) - lubridate::ymd_hms(starttime)), "seconds")
   return(list(samples1 = samples1, samples2 = samples2,
               meetingtime = meetingtime, iteration = time, 
               elapsedtime = as.numeric(elapsed$toc-elapsed$tic), cost = cost))

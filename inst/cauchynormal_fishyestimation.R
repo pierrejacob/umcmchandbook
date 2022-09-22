@@ -10,7 +10,7 @@ registerDoParallel(cores = detectCores()-2)
 set.seed(1)
 
 ## import functions for the Cauchy-Normal model
-source("inst/cauchynormalfunctions.R")
+source("inst/cauchynormal_functions.R")
 ## 
 
 ## obtain 'nrep' unbiased estimators for a grid of value of x

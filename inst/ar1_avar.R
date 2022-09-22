@@ -10,16 +10,16 @@ registerDoParallel(cores = detectCores()-2)
 set.seed(1)
 
 ## import functions for the AR(1) model
-source("inst/ar1functions.R")
+source("inst/ar1_functions.R")
 ## 
 
 ## choose lag, k and m
 k <- 500
 m <- 2500
-lag <- 250
+lag <- 500
 
 ## number of independent estimators
-nrep <- 1e4
+nrep <- 1e3
 ## number of atoms at which to estimate fishy function, per signed measure
 natoms_seq <- c(1, 10, 50, 100)
 

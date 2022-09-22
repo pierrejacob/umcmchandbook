@@ -33,7 +33,7 @@ h <- function(x){ return(x) }
 
 ## arbitrary point used in the definition of the fishy function
 x_0 <- 0
-state_x_0 <- list(position = x_0)
+state_x_0 <- rinit(x_0)
 
 
 # # # ## test

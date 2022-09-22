@@ -13,7 +13,8 @@ sample_unbiasedvar_reservoir(
   m = 1,
   lag = 1,
   x_0 = NULL,
-  natoms = 1
+  natoms = 1,
+  max_iterations = Inf
 )
 }
 \arguments{

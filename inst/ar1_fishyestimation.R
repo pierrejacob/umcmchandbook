@@ -10,12 +10,12 @@ registerDoParallel(cores = detectCores()-2)
 set.seed(1)
 
 ## import functions for the Cauchy-Normal model
-source("inst/ar1functions.R")
+source("inst/ar1_functions.R")
 ## 
 
 ## estimate fishy function at a grid of values x in (-30,30)
 xseq <- seq(from = -30, to = 30, length.out = 50)
-nrep <- 1e3
+nrep <- 1e2
 df <- data.frame()
 for (x in xseq){
   print(x)

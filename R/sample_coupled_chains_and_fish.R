@@ -1,38 +1,9 @@
-## sample coupled chains and estimators of fishy function evaluations towards asymptotic variance estimation   
 ## implements reservoir sampling
-#'@rdname sample_coupled_chains_and_fish
-#'@title Sample unbiased estimator of asymptotic variance in CLT for Markov chain averages
-#'@description Sample unbiased estimator of asymptotic variance
-#' in the CLT for Markov chain averages.
-#'
-#'@param single_kernel A list taking a state and returning a state, performing one step of a Markov kernel
-#'@param coupled_kernel A list taking two states and returning two states, performing one step of a coupled Markov kernel;
-#'it also returns a boolean "identical" indicating whether the two states are identical.
-#'@param rinit A list representing the initial state of the chain, that can be given to 'single_kernel'
-#'@param h test function h
-#'@param k An integer at which to start computing the unbiased estimator
-#'@param m A time horizon: the chains are sampled until the maximum between m and the meeting time
-#'@param lag A time lag, equal to one by default
-#'@param max_iterations A maximum number of iterations, at which to interrupt the while loop; Inf by default
-#'@param x_0 state fixed arbitrarily to define fishy function (y in the paper)
-#'@param natoms number of fishy function evaluations to estimate per signed measure (R in the paper)
-#'@return A list with
-#'\itemize{
-#' \item uestimator 
-#' \item uestimator_h2
-#' \item indexselectedatoms
-#' \item h_at_atoms
-#' \item htilde_at_atoms
-#' \item weight_at_atoms
-#' \item atomcounter
-#' \item meetingtime
-#' \item elapsedtime 
-#' \item cost 
-#' \item cost_fishyestimation
-#'}
+#'@export
 sample_coupled_chains_and_fish <- function(single_kernel, coupled_kernel, rinit, 
                                                        h, k = 0, m = 1, lag = 1, max_iterations = Inf,
                                                        x_0 = NULL, natoms = 1){
+  tictoc::tic("coupled chains and fish")
   if (k > m){
     print("error: k has to be less than m")
     return(NULL)
@@ -44,12 +15,13 @@ sample_coupled_chains_and_fish <- function(single_kernel, coupled_kernel, rinit,
   # starttime <- Sys.time()
   ## format x_0
   state_x_0 <- rinit(x_0)
+  dimh <- length(h(state_x_0$position))
   ##### generate first signed measure
   indexselectedatoms <- rep(NA, natoms)
   selectedatoms <- list()
   atomcounter <- 0 # counts atom in the signed measure
-  h_at_atoms <- rep(NA, natoms)
-  htilde_at_atoms <- rep(NA, natoms)
+  h_at_atoms <- matrix(NA, nrow = dimh, ncol = natoms)
+  htilde_at_atoms <- matrix(NA, nrow = dimh, ncol = natoms)
   weight_at_atoms <- rep(NA, natoms)
   ##
   state1 <- rinit(); state2 <- rinit()
@@ -60,7 +32,6 @@ sample_coupled_chains_and_fish <- function(single_kernel, coupled_kernel, rinit,
   # mcmcestimator computes the sum of h(X_t) for t=k,...,m
   mcmcestimator <- h(state1$position)
   mcmcestimator_h2 <- h(state1$position)^2
-  dimh <- length(mcmcestimator) ## here we assume that this is equal to one
   if (k > 0){
     mcmcestimator <- rep(0, dimh)
     mcmcestimator_h2 <- rep(0, dimh)
@@ -99,8 +70,6 @@ sample_coupled_chains_and_fish <- function(single_kernel, coupled_kernel, rinit,
   if (time >= k + lag){
     correction <- correction + (floor((time-k) / lag) - ceiling(max(lag, time-m)/lag) + 1) * (h(state1$position) - h(state2$position))
     correction_h2 <- correction_h2 + (floor((time-k) / lag) - ceiling(max(lag, time-m)/lag) + 1) * (h(state1$position)^2 - h(state2$position)^2)
-    # correction <- correction + min(m-k+1, ceiling((time - k)/lag)) * (h(state1$position) - h(state2$position))
-    # correction_h2 <- correction_h2 + min(m-k+1, ceiling((time - k)/lag)) * (h(state1$position)^2 - h(state2$position)^2)
     ## selected atoms might correspond to state1 or state2
     atomcounter <- atomcounter + 1
     for (iatom in 1:natoms){
@@ -161,8 +130,6 @@ sample_coupled_chains_and_fish <- function(single_kernel, coupled_kernel, rinit,
       if (time >= k + lag){ # update bias correction 
         correction <- correction + (floor((time-k) / lag) - ceiling(max(lag, time-m)/lag) + 1) * (h(state1$position) - h(state2$position))
         correction_h2 <- correction_h2 + (floor((time-k) / lag) - ceiling(max(lag, time-m)/lag) + 1) * (h(state1$position)^2 - h(state2$position)^2)
-        # correction <- correction + min(m-k+1, ceiling((time - k)/lag)) * (h(state1$position) - h(state2$position))
-        # correction_h2 <- correction_h2 + min(m-k+1, ceiling((time - k)/lag)) * (h(state1$position)^2 - h(state2$position)^2)
         ## selected atoms might correspond to state1 or state2
         atomcounter <- atomcounter + 1
         for (iatom in 1:natoms){
@@ -187,9 +154,9 @@ sample_coupled_chains_and_fish <- function(single_kernel, coupled_kernel, rinit,
   ## evaluate h at these atoms and estimate fishy function
   cost_fishyestimation <- rep(0, natoms)
   for (iatom in 1:natoms){
-    h_at_atoms[iatom] <- h(selectedatoms[[iatom]]$position)
-    upf <- sample_unbiasedfishy(coupled_kernel, h, selectedatoms[[iatom]], state_x_0)
-    htilde_at_atoms[iatom] <- upf$estimator
+    h_at_atoms[,iatom] <- h(selectedatoms[[iatom]]$position)
+    upf <- sample_unbiasedfishy(coupled_kernel, h, selectedatoms[[iatom]], state_x_0, max_iterations = max_iterations)
+    htilde_at_atoms[,iatom] <- upf$estimator
     cost_fishyestimation[iatom] <- 2 * upf$meetingtime
   }
   ## finalize unbiased estimator of pi(h) and pi(h^2)
@@ -197,18 +164,19 @@ sample_coupled_chains_and_fish <- function(single_kernel, coupled_kernel, rinit,
   uestimator_h2 <- mcmcestimator_h2 + correction_h2
   ## cost of obtaining signed measure 
   costsignedmeasure <- lag + 2*(meetingtime - lag) + max(0, time - meetingtime)
-  # currentime <- Sys.time()
-  # elapsedtime <- as.numeric(lubridate::as.duration(lubridate::ymd_hms(currentime) - lubridate::ymd_hms(starttime)), "seconds")
+  elapsed <- tictoc::toc(quiet = T)
+  tictoc::tic.clear()
   return(list(uestimator = uestimator / (m - k + 1),
               uestimator_h2 = uestimator_h2 / (m - k + 1),
               indexselectedatoms = indexselectedatoms,
+              selectedatoms = selectedatoms,
               h_at_atoms = h_at_atoms,
               htilde_at_atoms = htilde_at_atoms,
               weight_at_atoms = weight_at_atoms / (m - k + 1),
               atomcounter = atomcounter,
               meetingtime = meetingtime, 
-              # elapsedtime = elapsedtime, 
               costsignedmeasure = costsignedmeasure, 
-              cost_fishyestimation = cost_fishyestimation ## cost of _each_ fishy estimator
+              cost_fishyestimation = cost_fishyestimation, ## cost of _each_ fishy estimator
+              elapsedtime = as.numeric(elapsed$toc-elapsed$tic)
         ))
 }

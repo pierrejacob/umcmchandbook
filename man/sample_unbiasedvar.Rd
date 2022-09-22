@@ -13,7 +13,8 @@ sample_unbiasedvar(
   m = 1,
   lag = 1,
   x_0 = NULL,
-  natoms = 1
+  natoms = 1,
+  max_iterations = Inf
 )
 }
 \arguments{
@@ -40,10 +41,10 @@ it also returns a boolean "identical" indicating whether the two states are iden
 A list with
 \itemize{
 \item estimator: 
-\item covariance_term:
+\item fishyterms:
 \item varh:
 \item pih:
-\item cost_fishyestimation:
+\item cost_fishyterms:
 \item cost_umcmc:
 \item cost:
 }

@@ -37,6 +37,12 @@ sample_unbiasedfishy <- function(coupled_kernel, h, state_x, state_x_0, max_iter
     # check if meeting happens
     if (coupledstates$identical) meetingtime <- time
   }
+  if (time == max_iterations){
+    print("error in sample_coupled_chains: time == max_iterations, still no meeting")
+    cat("state_x at position:", state_x$position, "\n")
+    cat("state_x_0 at position:", state_x_0$position, "\n")
+    return(list(estimator = NULL, meetingtime = Inf))
+  }
   return(list(estimator = estimator_, meetingtime = meetingtime))
 }
 

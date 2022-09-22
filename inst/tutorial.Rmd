@@ -1,7 +1,5 @@
 ---
 title: 'tutorial: main functions'
-author: '-~-'
-date: "May 2022"
 output: html_document
 ---
 
@@ -127,6 +125,7 @@ g_tvbounds <- qplot(x = 1:niterations, y = ubounds, geom = "line") +
   ylab("TV distance") + xlab("iteration")
 g_tvbounds
 ```
+
 ## Fishy function estimation
 
 We set a grid of values $x \in (-5,+5)$

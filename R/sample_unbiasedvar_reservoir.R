@@ -25,14 +25,13 @@
 #'}
 #'@export
 sample_unbiasedvar_reservoir <- function(single_kernel, coupled_kernel, rinit, h, 
-                                         k = 0, m = 1, lag = 1, x_0 = NULL, natoms = 1){
+                                         k = 0, m = 1, lag = 1, x_0 = NULL, natoms = 1, max_iterations = Inf){
   tictoc::tic("unbiased asymptotic variance estimator")
-  # starttime <- Sys.time()
   ## if natoms is a vector, run algorithm with R=max(natoms)
   natoms <- sort(natoms)
   natoms_max <- natoms[length(natoms)]
-  run1 <- unbiasedpoisson:::sample_coupled_chains_and_fish(single_kernel, coupled_kernel, rinit, h = h, k = k, m = m, lag = lag, x_0 = x_0, natoms = natoms_max)
-  run2 <- unbiasedpoisson:::sample_coupled_chains_and_fish(single_kernel, coupled_kernel, rinit, h = h, k = k, m = m, lag = lag, x_0 = x_0, natoms = natoms_max)
+  run1 <- unbiasedpoisson:::sample_coupled_chains_and_fish(single_kernel, coupled_kernel, rinit, h = h, k = k, m = m, lag = lag, x_0 = x_0, natoms = natoms_max, max_iterations = max_iterations)
+  run2 <- unbiasedpoisson:::sample_coupled_chains_and_fish(single_kernel, coupled_kernel, rinit, h = h, k = k, m = m, lag = lag, x_0 = x_0, natoms = natoms_max, max_iterations = max_iterations)
   ## estimator of pi(h^2) as average of two estimators
   pi_hsquared_ <- (1/2)*(run1$uestimator_h2 + run2$uestimator_h2)
   ## estimator of pi(h)^2 as product of two independent estimators of pi(h)
@@ -41,19 +40,19 @@ sample_unbiasedvar_reservoir <- function(single_kernel, coupled_kernel, rinit, h
   varh <- pi_hsquared_ - pih_deepbreath_squared_
   ## term involving fishy function estimates
   ## computed for each 'natoms' if 'natoms' is a vector
-  fishyterm1 <- run1$atomcounter * cumsum(run1$weight_at_atoms * (run1$h_at_atoms - run2$uestimator) * run1$htilde_at_atoms)
-  fishyterm2 <- run2$atomcounter * cumsum(run2$weight_at_atoms * (run2$h_at_atoms - run1$uestimator) * run2$htilde_at_atoms)
-  fishyterms <- ((fishyterm1 + fishyterm2)/(1:natoms_max))[natoms]
+  fishyterm1 <- run1$atomcounter * t(apply(X = (run1$h_at_atoms - run2$uestimator) * run1$htilde_at_atoms, MARGIN = 1, FUN = function(v) cumsum(run1$weight_at_atoms * v)))
+  fishyterm2 <- run2$atomcounter * t(apply(X = (run2$h_at_atoms - run1$uestimator) * run2$htilde_at_atoms, MARGIN = 1, FUN = function(v) cumsum(run2$weight_at_atoms * v)))
+  fishyterms <- t(t(fishyterm1 + fishyterm2)/(1:natoms_max))[,natoms,drop=F]
   estimator <- - varh + fishyterms ## compute unbiased asymptotic variance estimator
   cost_fishyterms <- cumsum(run1$cost_fishyestimation + run2$cost_fishyestimation)[natoms]
   cost <- run1$costsignedmeasure + run2$costsignedmeasure + cost_fishyterms
-  # currentime <- Sys.time()
-  # elapsedtime <- as.numeric(lubridate::as.duration(lubridate::ymd_hms(currentime) - lubridate::ymd_hms(starttime)), "seconds")
   elapsed <- tictoc::toc(quiet = T)
   tictoc::tic.clear()
   return(list(estimator = estimator, fishyterms = fishyterms,
-              varh = varh, pih = c(run1$uestimator, run2$uestimator), 
-              cost_fishyterms = cost_fishyterms, cost = cost, 
+              varh = varh, pih = cbind(run1$uestimator, run2$uestimator), 
+              cost_fishyterms = cost_fishyterms, 
+              cost_umcmc = run1$costsignedmeasure + run2$costsignedmeasure,
+              cost = cost, 
               elapsedtime = as.numeric(elapsed$toc-elapsed$tic)))
 }
 
