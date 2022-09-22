@@ -33,14 +33,14 @@ summary(meetingtimes)
 
 ecdf_f <- ecdf(meetingtimes-lag)
 # curve(1-ecdf_f(x), from = 1, to = 5e3, log = 'xy', xlab = 't', ylab = 'P(tau > t)')
-g_meetings128 <- ggplot(data=NULL) + stat_function(fun=function(x) 1-ecdf_f(x), n = 1000) + scale_y_log10()+scale_x_log10(limits = c(1, 5e3)) + xlab(TeX("$t$")) + ylab(TeX("P(\\tau>t)"))
+g_meetings128 <- ggplot(data=NULL) + stat_function(fun=function(x) 1-ecdf_f(x), n = 1000) + scale_y_log10()+scale_x_log10(limits = c(1, 5e3)) + xlab(TeX("$t$")) + ylab(TeX("$P(\\tau>t)$"))
 print(g_meetings128)
 
 x <- seq(from = 200, to = 2000, by = 1)
 y <- 1-ecdf_f(x)
 lmres <- lm(log(y) ~ log(x))
 ggplot(data=data.frame(logx=log(x),logy=log(y)), aes(x = logx, y = logy)) + geom_line() +
-  geom_abline(intercept = lmres$coefficients[1], slope = lmres$coefficients[2], colour = 'red') + xlab(TeX("$\\log(t)$")) + ylab(TeX("\\log P(\\tau>t)"))
+  geom_abline(intercept = lmres$coefficients[1], slope = lmres$coefficients[2], colour = 'red') + xlab(TeX("$\\log(t)$")) + ylab(TeX("$\\log P(\\tau>t)$"))
 print(lmres)
 
 niterations <- 1000

@@ -12,6 +12,6 @@ output/
 inst/backup/
 ./inst/backup/
 ./inst/backup/*
-./inst/tutorial_cache/*
-./inst/tutorial_files/*
+inst/tutorial_cache/
+inst/tutorial_files/
 inst_test/

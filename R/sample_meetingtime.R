@@ -22,7 +22,6 @@
 #'}
 #'@export
 sample_meetingtime <- function(single_kernel, coupled_kernel, rinit, lag = 1, max_iterations = Inf){
-  # starttime <- Sys.time()
   tictoc::tic("meeting time")
   # initialize
   state1 <- rinit(); state2 <- rinit()
@@ -43,10 +42,7 @@ sample_meetingtime <- function(single_kernel, coupled_kernel, rinit, lag = 1, ma
     # check if meeting happens
     if (coupledstates$identical) meetingtime <- time
   }
-  # currentime <- Sys.time()
   elapsed <- tictoc::toc(quiet = T)
-  # print(elapsed$toc-elapsed$tic)
   tictoc::tic.clear()
-  # elapsedtime <- as.numeric(lubridate::as.duration(lubridate::ymd_hms(currentime) - lubridate::ymd_hms(starttime)), "milliseconds")
   return(list(meetingtime = meetingtime, elapsedtime = as.numeric(elapsed$toc-elapsed$tic)))
 }

@@ -14,6 +14,9 @@ if (!require("devtools")) install.packages("devtools")
 devtools::install_github("pierrejacob/unbiasedpoisson")
 ```
 
+This should install `Rcpp`, `RcppEigen`, `tictoc` automatically if
+needed.
+
 Most scripts depend on packages which can be installed via:
 
 ``` r
@@ -27,6 +30,7 @@ if (!require("ggthemes")) install.packages("ggthemes")
 Some scripts also depend on the following packages:
 
 ``` r
+if (!require("boot")) install.packages("boot")
 if (!require("mcmcse")) install.packages("mcmcse")
 if (!require("fftwtools")) install.packages("fftwtools")
 if (!require("RcppArmadillo")) install.packages("RcppArmadillo")
