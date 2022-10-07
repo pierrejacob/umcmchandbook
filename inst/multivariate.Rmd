@@ -1,0 +1,231 @@
+---
+title: 'tutorial: multivariate asymptotic variance estimation'
+output: html_document
+---
+
+```{r setup1, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+rm(list = ls())
+library(unbiasedpoisson)
+setmytheme()
+library(doParallel)
+library(doRNG)
+library(dplyr)
+# register parallel cores
+registerDoParallel(cores = detectCores()-2)
+# set RNG seed
+set.seed(1)
+```
+
+### VAR(1) model
+
+We consider a VAR(1) model defined as
+$$ X_t = \Phi X_{t-1} + W_t,$$
+with $W_t$ i.i.d. $\text{Normal}(0,\Omega)$, and $X_{0}\sim \text{Normal}(0,I)$.
+We consider the test function $h:x\mapsto x$. 
+The invariant distribution $\pi$ is $\text{Normal}(0,V)$,
+with 
+$$ \text{vec}(V) = (I_{d^2} - \Phi \otimes \Phi)^{-1} \text{vec}(\Omega).$$
+
+We take the same parameters as in "Multivariate output analysis for MCMC" by Vats, Flegal & Jones.
+
+```{r var1}
+dimx <- 5
+Phi <- diag(c(0.9, 0.5, 0.1, 0.1, 0.1))
+Omega <- matrix(0, nrow = dimx, ncol = dimx)
+for (i in 1:dimx){
+  for (j in 1:dimx){
+    Omega[i,j] <- 0.9^{abs(i-j)}    
+  }
+}
+Omega_chol <- chol(Omega)
+Omega_chol_inv <- solve(Omega_chol)
+## ground truth
+vecV <- solve(diag(1,  dimx^2) - kronecker(Phi, Phi), as.numeric(Omega))
+V <- matrix(vecV, nrow = dimx)
+tmp <- solve(diag(1, dimx) - Phi)
+SIGMA <- tmp %*% V + V %*% tmp - V
+```
+
+The asymptotic variance $v(P,h)$ in the Central Limit Theorem (CLT) is here:
+$$v(P,h) = (I_d - \Phi)^{-1}V + V(I_p  - \Phi)^{-1}-V.$$
+
+### Implementation
+
+We implement the VAR(1) model and a coupling of it.
+
+```{r kernels, message=F, warning=F}
+## Markov kernel
+single_kernel <- function(state){
+  next_position <- Phi %*% state$position + t(mvnfast::rmvn(1, rep(0, dimx), Omega))
+  return(list(position = next_position))
+}
+
+## initial distribution Normal(0, 4^2)
+rinit <- function(position){
+  if (missing(position)){
+    position <- t(mvnfast::rmvn(1, rep(0, dimx), diag(1, dimx, dimx)))
+  }
+  return(list(position = position))
+}
+
+
+## Coupled Markov kernel
+## using "reflection-maximal coupling" implemented in the function 'rnorm_reflectionmax'
+coupled_kernel <- function(state1, state2){
+  nextvalues <- unbiasedpoisson::rmvnorm_reflectionmax(mu1 = Phi %*% state1$position,
+                                                       mu2 = Phi %*% state2$position, Omega_chol, Omega_chol_inv)
+  return(list(state1 = list(position = nextvalues$xy[,1,drop=F]),
+              state2 = list(position = nextvalues$xy[,2,drop=F]),
+              identical = nextvalues$identical))
+}
+
+## test function x \mapsto x
+h <- function(x){ return(x) }
+
+## arbitrary point used in the definition of the fishy function
+x_0 <- matrix(rep(0, dimx), ncol = 1)
+state_x_0 <- rinit(x_0)
+```
+
+
+### Convergence to stationarity
+
+Histogram of meeting times.
+
+```{r meetingtimes}
+### histogram of meeting times
+nrep <- 1e3
+lag <- 40
+meetingtime_runs <- foreach (irep = 1:nrep) %dorng% {
+  sample_meetingtime(single_kernel, coupled_kernel, rinit, lag = lag)
+}
+meetingtimes <- sapply(meetingtime_runs, function(x) x$meetingtime)
+qplot(x=meetingtimes-lag, geom = 'histogram')
+```
+
+```{r tvupperbounds}
+### TV upper bounds
+niterations <- 75
+ubounds <- sapply(1:niterations, function(t) tv_upper_bound(unlist(meetingtimes), lag, t))
+g_tvbounds <- qplot(x = 1:niterations, y = ubounds, geom = "line") +
+  ylab("TV distance") + xlab("time") + ylim(0,1)
+g_tvbounds
+```
+
+
+### Asymptotic variance estimation
+
+Next we estimate the asymptotic variance with the proposed method.
+
+```{r definetuning}
+### lag, k and m
+lag <- 40
+k <- lag
+m <- 5 * k
+natoms <- 20
+```
+
+We don't have to change much of the implementation
+in order to estimate multivariate asymptotic variances.
+We define an extended test function that includes cross terms.
+
+```{r extendedtest}
+## redefine test function to compute h_i, i=1,...,dimh but also h_i h_j for i<j
+dimh <- 5
+hextended <- function(x){
+  result <- h(x)
+  for (i in 1:(dimh-1)){
+    for (j in (i+1):(dimh)){
+      result <- c(result, x[i]*x[j])
+    }
+  }
+  return(result)
+}
+```
+
+Then we re-define the function that takes two runs of
+`sample_coupled_chains_and_fish` and outputs an unbiased
+estimator of $v(P,h)$. Thankfully we don't have to change
+anything in `sample_coupled_chains_and_fish`.
+
+```{r mvunbiasedvar}
+mv_unbiasedvar_from_tworuns <- function(run1, run2, natoms = 1){
+  tictoc::tic("unbiased asymptotic variance estimator")
+  ## estimator of pi(h h^T) as average of two estimators
+  estim_pih.hT <- matrix(NA, dimh, dimh)
+  pi_hsquared_ <- (1/2)*(run1$uestimator_h2 + run2$uestimator_h2)
+  diag(estim_pih.hT) <- pi_hsquared_[1:dimh]
+  index <- dimh
+  for (i in 1:(dimh-1)){
+    for (j in (i+1):dimh){
+      index <- index + 1
+      estim_pih.hT[i,j] <- estim_pih.hT[j,i] <- (1/2)*(run1$uestimator[index] + run2$uestimator[index])
+    }
+  }
+  ## estimator of pi(h) pi(h)^T as product of two independent estimators of pi(h)
+  pih_deepbreath_squared_ <- matrix(run1$uestimator[1:dimh], ncol = 1) %*% 
+    matrix(run2$uestimator[1:dimh], nrow = 1)
+  ## estimate of variance under pi
+  varh <- estim_pih.hT - pih_deepbreath_squared_
+  ## term involving fishy function estimates
+  fishyterm1 <- fishyterm2 <- matrix(0, dimh, dimh)
+  for (iatom in 1:natoms){
+    fishyterm1 <- fishyterm1 + run1$atomcounter * run1$weight_at_atoms[iatom] * 
+      matrix(run1$h_at_atoms[1:dimh,iatom] - run2$uestimator[1:dimh], ncol = 1) %*% 
+      matrix(run1$htilde_at_atoms[1:dimh,iatom], nrow = 1)
+    fishyterm2 <- fishyterm2 + run2$atomcounter * run2$weight_at_atoms[iatom] * 
+      matrix(run2$h_at_atoms[1:dimh,iatom] - run1$uestimator[1:dimh], ncol = 1) %*% 
+      matrix(run2$htilde_at_atoms[1:dimh,iatom], nrow = 1)
+  }
+  fishyterms <- (fishyterm1 + fishyterm2)/(2*natoms)
+  fishyterms <- fishyterms + t(fishyterms)
+  ## compute unbiased asymptotic variance estimator
+  estimator <- - varh + fishyterms 
+  ## compute costs
+  cost_fishyterms <- cumsum(run1$cost_fishyestimation + run2$cost_fishyestimation)[natoms]
+  cost <- run1$costsignedmeasure + run2$costsignedmeasure + cost_fishyterms
+  elapsed <- tictoc::toc(quiet = T)
+  tictoc::tic.clear()
+  return(list(estimator = estimator, fishyterms = fishyterms,
+              varh = varh, pih = cbind(run1$uestimator, run2$uestimator),
+              cost_fishyterms = cost_fishyterms,
+              cost_umcmc = run1$costsignedmeasure + run2$costsignedmeasure,
+              cost = cost,
+              elapsedtime = as.numeric(elapsed$toc-elapsed$tic)))
+}
+```
+
+We run $10^3$ estimates, and average the results to estimate $v(P,h)$.
+
+```{r uavarruns}
+nrep <- 1e3
+results <- foreach(irep = 1:nrep) %dorng% {
+  run1 <- sample_coupled_chains_and_fish(single_kernel, coupled_kernel, rinit, 
+                                         hextended, k, m, lag, x_0 = x_0, natoms = natoms)
+  run2 <- sample_coupled_chains_and_fish(single_kernel, coupled_kernel, rinit, 
+                                         hextended, k, m, lag, x_0 = x_0, natoms = natoms)
+  mv_unbiasedvar_from_tworuns(run1, run2, natoms)
+}
+results_array <- array(data=0, dim = c(nrep, dimh, dimh))
+for (irep in 1:nrep){
+  results_array[irep,,] <- results[[irep]]$estimator
+}
+estimate <- apply(results_array, c(2,3), mean)
+print(round(estimate, 2))
+```
+
+We compare with the exact value of the asymptotic variance.
+
+```{r exactsigma}
+print(round(SIGMA, 2))
+```
+
+Each of the $10^3$ estimates was obtained for a certain cost. Let's look at the histogram of the cost.
+
+```{r costhist}
+costs <- sapply(results, function(x) x$cost)
+qplot(x=costs, geom = 'histogram')
+```
+
+

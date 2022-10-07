@@ -81,7 +81,7 @@ load("../output/ar1.uavar.RData")
 get_mean_with_booterror <- function(v, nb = 1000){
   bootresult <- boot::boot(data = v, statistic = function(v,indices) mean(v[indices]), R = nb)
   paste0("[", 
-         paste0(prettyNum(as.numeric(quantile(bootresult$t, probs = c(0.025, 0.975))), digits=0, scientific = F, nsmall = 0), collapse = " - "),
+         paste0(prettyNum(as.numeric(quantile(bootresult$t, probs = c(0.025, 0.975))), digits=1, scientific = F, nsmall = 0), collapse = " - "),
          "]")
 }
 # print variance
@@ -208,30 +208,6 @@ we compute the MSE by dividing the variance by the number of samples that we
 can obtain in a given computing budget. We plot that MSE with a full line.
 
 
-<!-- #### Table -->
-
-<!-- ```{r bm, message=FALSE, warning=FALSE} -->
-<!-- ##  load results from long runs of MCMC -->
-<!-- proposed_cost <- table %>% filter(natoms == 10) %>% pull(totalcost) -->
-<!-- proposed_variance <- table %>% filter(natoms == 10) %>% pull(variance) -->
-<!-- load(file = "../output/ar1batchmeans.RData") -->
-<!-- bm.summary.df <- bm.df %>% filter(nchains >= 4) %>% group_by(r, nchains, timehorizon) %>%  -->
-<!--   summarise(mean_estimate = mean(varestimate),  -->
-<!--             cost = mean(nchains) * mean(timehorizon), -->
-<!--             bias = mean(varestimate) - avar, -->
-<!--             mse = mean((varestimate - avar)^2)) -->
-<!-- bm.summary.df$mse_proposed <- prettyNum(proposed_variance/(floor(bm.summary.df$cost/proposed_cost)), digits = 2, scientific = T) -->
-<!-- bm.summary.df$mse <- prettyNum(bm.summary.df$mse, digits = 2, scientific=T) -->
-<!-- bm.summary.df$cost <- prettyNum(bm.summary.df$cost, digits = 2, scientific=T) -->
-<!-- bm.summary.df$timehorizon <- prettyNum(bm.summary.df$timehorizon, digits = 2, scientific=T) -->
-
-<!-- bm.summary.df <- bm.summary.df %>% setNames(c("r", "\\# chains", "time horizon", "average estimate", "cost",  "bias", "MSE", "MSE proposed")) -->
-<!-- print(bm.summary.df) -->
-
-<!-- knitr::kable(bm.summary.df, digits = 0, row.names = NA, format = 'latex', escape = FALSE) %>% -->
-<!--   cat(., file = '../output/ar1.summary.bm.tex') -->
-<!-- ``` -->
-
 ```{r plotbm, message=FALSE, warning=FALSE}
 load("../output/ar1.uavar.RData")
 table <- results %>% group_by(natoms) %>% summarise( estimate = mean(estimator),
@@ -267,31 +243,31 @@ The overall message is that our proposed estimates deliver a smaller MSE
 as a function of cost, at least for large enough computing budget. Also,
 again it's not good to use $R=1$ here.
 
+
+We also create a plot about the bias of batch means estimators.
+
+```{r plotbmbias, message=FALSE, warning=FALSE}
+plot.df <- bm.df %>% group_by(r, nchains, timehorizon) %>% 
+  summarise(mean_estimate = mean(varestimate), 
+            cost = mean(nchains) * mean(timehorizon),
+            bias = mean(varestimate) - avar,
+            mse = mean((varestimate - avar)^2))
+plot.df$config <- paste0("#", plot.df$nchains, "r", plot.df$r)
+plot.df <- plot.df %>% ungroup() %>% select(r, nchains, cost, bias, config)
+g <- ggplot(plot.df, aes(x = cost, y = bias, colour = factor(r), shape = factor(nchains))) + geom_point(size = 5)
+g <- g + scale_x_log10(limits = c(9e3, 1.1e7)) + ylim(-2500,+2500)
+g <- g + xlab("total cost") + ylab("bias") + scale_color_grey(name = "BM: r") + scale_shape(name="BM: # chains")
+g <- g + guides(colour = guide_legend(override.aes = list(size = 3, shape = 15, linetype = 0))) + theme(legend.box = "vertical")
+g
+ggsave(filename = "../output/ar1.bmbias.pdf", plot = g, width = 8, height = 5)
+```
+
+We see that the 'r' parameter has a huge effect on the bias.
+
+
 #### Spectral variance
 
 We can do the same with spectral variance estimates.
-
-<!-- #### Table -->
-
-<!-- ```{r spectral, message=FALSE, warning=FALSE} -->
-<!-- load(file = "../output/ar1spectralvar.RData") -->
-<!-- spectral.summary.df <- spectral.df %>% filter(nchains >= 4) %>% group_by(r, nchains, timehorizon) %>%  -->
-<!--   summarise(mean_estimate = mean(varestimate),  -->
-<!--             cost = mean(nchains) * mean(timehorizon), -->
-<!--             bias = mean(varestimate) - avar, -->
-<!--             mse = mean((varestimate - avar)^2)) -->
-<!-- spectral.summary.df$mse_proposed <- prettyNum(proposed_variance/(floor(spectral.summary.df$cost/proposed_cost)), digits = 2, scientific = T) -->
-<!-- spectral.summary.df$mse <- prettyNum(spectral.summary.df$mse, digits = 2, scientific=T) -->
-<!-- spectral.summary.df$cost <- prettyNum(spectral.summary.df$cost, digits = 2, scientific=T) -->
-<!-- spectral.summary.df$timehorizon <- prettyNum(spectral.summary.df$timehorizon, digits = 2, scientific=T) -->
-<!-- spectral.summary.df <- spectral.summary.df %>% setNames(c("r", "\\# chains", "time horizon", "average estimate", "cost",  "bias", "MSE", "MSE proposed")) -->
-<!-- print(spectral.summary.df) -->
-<!-- knitr::kable(spectral.summary.df, digits = 0, row.names = NA, format = 'latex', escape = FALSE) %>% -->
-<!--   cat(., file = '../output/ar1.summary.spectral.tex') -->
-
-<!-- ``` -->
-
-<!-- #### Plot  -->
 
 ```{r plotsm, message=FALSE, warning=FALSE}
 load(file = "../output/ar1spectralvar.RData")
@@ -322,4 +298,20 @@ ggsave(filename = "../output/ar1.spectralcomparison.pdf", plot = g, width = 8, h
 We see that spectral variance estimates are better than batch means,
 but our proposed estimates remain competitive.
 
+
+```{r plotspectralbias, message=FALSE, warning=FALSE}
+plot.df <- spectral.df %>% filter(nchains >= 1) %>% group_by(r, nchains, timehorizon) %>% 
+  summarise(mean_estimate = mean(varestimate), 
+            cost = mean(nchains) * mean(timehorizon),
+            bias = mean(varestimate) - avar,
+            mse = mean((varestimate - avar)^2))
+plot.df$config <- paste0("#", plot.df$nchains, "r", plot.df$r)
+plot.df <- plot.df %>% ungroup() %>% select(r, nchains, cost, bias, config)
+g <- ggplot(plot.df, aes(x = cost, y = bias, colour = factor(r), shape = factor(nchains))) + geom_point(size = 5)
+g <- g + scale_x_log10(limits = c(9e3, 1.1e7)) + ylim(-2500,+2500)
+g <- g + xlab("total cost") + ylab("bias") + scale_color_grey(name = "SV: r") + scale_shape(name="SV: # chains")
+g <- g + guides(colour = guide_legend(override.aes = list(size = 3, shape = 15, linetype = 0))) + theme(legend.box = "vertical")
+g
+ggsave(filename = "../output/ar1.spectralbias.pdf", plot = g, width = 8, height = 5)
+```
 
