@@ -27,4 +27,5 @@ if (!require("doParallel")) install.packages("doParallel")
 if (!require("doRNG")) install.packages("doRNG")
 if (!require("latex2exp")) install.packages("latex2exp")
 if (!require("ggthemes")) install.packages("ggthemes")
+if (!require("ggridges")) install.packages("ggridges")
 ```
