@@ -32,14 +32,14 @@ sample_unbiasedvar <- function(single_kernel, coupled_kernel, rinit, h,
                           k = 0, m = 1, lag = 1, x_0 = NULL, natoms = 1, max_iterations = Inf){
   tictoc::tic("unbiased asymptotic variance estimator")
   ## run two coupled chains
-  cc1_ <-   unbiasedpoisson::sample_coupled_chains(single_kernel, coupled_kernel, rinit, m = m, lag = lag, max_iterations = max_iterations)
-  cc2_ <-   unbiasedpoisson::sample_coupled_chains(single_kernel, coupled_kernel, rinit, m = m, lag = lag, max_iterations = max_iterations)
+  cc1_ <-   umcmchandbook::sample_coupled_chains(single_kernel, coupled_kernel, rinit, m = m, lag = lag, max_iterations = max_iterations)
+  cc2_ <-   umcmchandbook::sample_coupled_chains(single_kernel, coupled_kernel, rinit, m = m, lag = lag, max_iterations = max_iterations)
   cost_umcmc <- cc1_$cost + cc2_$cost
   ## from both signed measures, get unbiased estimator of pi(h) and pi(h^2)
-  pi_h1_        <- unbiasedpoisson::H_bar(cc1_, h = h, k = k, m = m)
-  pi_h2_        <- unbiasedpoisson::H_bar(cc2_, h = h, k = k, m = m)
-  pi_hsquared1_ <- unbiasedpoisson::H_bar(cc1_, h = function(x) h(x)^2, k = k, m = m)
-  pi_hsquared2_ <- unbiasedpoisson::H_bar(cc2_, h = function(x) h(x)^2, k = k, m = m)
+  pi_h1_        <- umcmchandbook::H_bar(cc1_, h = h, k = k, m = m)
+  pi_h2_        <- umcmchandbook::H_bar(cc2_, h = h, k = k, m = m)
+  pi_hsquared1_ <- umcmchandbook::H_bar(cc1_, h = function(x) h(x)^2, k = k, m = m)
+  pi_hsquared2_ <- umcmchandbook::H_bar(cc2_, h = function(x) h(x)^2, k = k, m = m)
   dimh <- length(pi_h1_)
   ## estimator of pi(h^2) as average of two estimators
   pi_hsquared_ <- (1/2)*(pi_hsquared1_ + pi_hsquared2_)
@@ -54,7 +54,7 @@ sample_unbiasedvar <- function(single_kernel, coupled_kernel, rinit, h,
   natoms <- sort(natoms)
   natoms_max <- natoms[length(natoms)]
   ## convert to data frame and prune identical atoms 
-  cc1_df <- unbiasedpoisson:::c_chains_to_dataframe(cc1_, k, m, dopar = FALSE, prune = TRUE)
+  cc1_df <- umcmchandbook:::c_chains_to_dataframe(cc1_, k, m, dopar = FALSE, prune = TRUE)
   natomsincc1 <- length(cc1_df$weight)
   xis <- rep(1./natomsincc1, natomsincc1)
   h_at_atoms1 <- matrix(NA, nrow = dimh, ncol = natoms_max)
@@ -77,7 +77,7 @@ sample_unbiasedvar <- function(single_kernel, coupled_kernel, rinit, h,
   }
   ## next get fishy function estimator for atoms in cc2_
   ## convert to data frame and prune identical atoms 
-  cc2_df <- unbiasedpoisson:::c_chains_to_dataframe(cc2_, k, m, dopar = FALSE, prune = TRUE)
+  cc2_df <- umcmchandbook:::c_chains_to_dataframe(cc2_, k, m, dopar = FALSE, prune = TRUE)
   natomsincc2 <- length(cc2_df$weight)
   xis <- rep(1./natomsincc2, natomsincc2)
   h_at_atoms2 <- matrix(NA, nrow = dimh, ncol = natoms_max)

@@ -13,7 +13,7 @@ Rcpp::Rostream<false>& Rcpp::Rcerr = Rcpp::Rcpp_cerr_get();
 
 // c_chains_to_measure_as_list_
 List c_chains_to_measure_as_list_(const List& c_chains, int k, int m);
-RcppExport SEXP _unbiasedpoisson_c_chains_to_measure_as_list_(SEXP c_chainsSEXP, SEXP kSEXP, SEXP mSEXP) {
+RcppExport SEXP _umcmchandbook_c_chains_to_measure_as_list_(SEXP c_chainsSEXP, SEXP kSEXP, SEXP mSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -26,7 +26,7 @@ END_RCPP
 }
 // estimator_bin_
 double estimator_bin_(List c_chains, int component, double lower, double upper, int k, int m, int lag);
-RcppExport SEXP _unbiasedpoisson_estimator_bin_(SEXP c_chainsSEXP, SEXP componentSEXP, SEXP lowerSEXP, SEXP upperSEXP, SEXP kSEXP, SEXP mSEXP, SEXP lagSEXP) {
+RcppExport SEXP _umcmchandbook_estimator_bin_(SEXP c_chainsSEXP, SEXP componentSEXP, SEXP lowerSEXP, SEXP upperSEXP, SEXP kSEXP, SEXP mSEXP, SEXP lagSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -41,44 +41,9 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-// fcprd
-Eigen::MatrixXd fcprd(const Eigen::MatrixXd X);
-RcppExport SEXP _unbiasedpoisson_fcprd(SEXP XSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< const Eigen::MatrixXd >::type X(XSEXP);
-    rcpp_result_gen = Rcpp::wrap(fcprd(X));
-    return rcpp_result_gen;
-END_RCPP
-}
-// cpp_prod
-Eigen::MatrixXd cpp_prod(const Eigen::MatrixXd X, const Eigen::MatrixXd Y);
-RcppExport SEXP _unbiasedpoisson_cpp_prod(SEXP XSEXP, SEXP YSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< const Eigen::MatrixXd >::type X(XSEXP);
-    Rcpp::traits::input_parameter< const Eigen::MatrixXd >::type Y(YSEXP);
-    rcpp_result_gen = Rcpp::wrap(cpp_prod(X, Y));
-    return rcpp_result_gen;
-END_RCPP
-}
-// multinomial_resampling_n_
-IntegerVector multinomial_resampling_n_(const NumericVector& weights, int ndraws);
-RcppExport SEXP _unbiasedpoisson_multinomial_resampling_n_(SEXP weightsSEXP, SEXP ndrawsSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< const NumericVector& >::type weights(weightsSEXP);
-    Rcpp::traits::input_parameter< int >::type ndraws(ndrawsSEXP);
-    rcpp_result_gen = Rcpp::wrap(multinomial_resampling_n_(weights, ndraws));
-    return rcpp_result_gen;
-END_RCPP
-}
 // fast_rmvnorm_
 NumericMatrix fast_rmvnorm_(int nsamples, const NumericVector& mean, const NumericMatrix& covariance);
-RcppExport SEXP _unbiasedpoisson_fast_rmvnorm_(SEXP nsamplesSEXP, SEXP meanSEXP, SEXP covarianceSEXP) {
+RcppExport SEXP _umcmchandbook_fast_rmvnorm_(SEXP nsamplesSEXP, SEXP meanSEXP, SEXP covarianceSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -91,7 +56,7 @@ END_RCPP
 }
 // fast_rmvnorm_cholesky_
 NumericMatrix fast_rmvnorm_cholesky_(int nsamples, const NumericVector& mean, const Eigen::MatrixXd& cholesky);
-RcppExport SEXP _unbiasedpoisson_fast_rmvnorm_cholesky_(SEXP nsamplesSEXP, SEXP meanSEXP, SEXP choleskySEXP) {
+RcppExport SEXP _umcmchandbook_fast_rmvnorm_cholesky_(SEXP nsamplesSEXP, SEXP meanSEXP, SEXP choleskySEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -104,7 +69,7 @@ END_RCPP
 }
 // fast_dmvnorm_
 NumericVector fast_dmvnorm_(const NumericMatrix& x, const NumericVector& mean, const NumericMatrix& covariance);
-RcppExport SEXP _unbiasedpoisson_fast_dmvnorm_(SEXP xSEXP, SEXP meanSEXP, SEXP covarianceSEXP) {
+RcppExport SEXP _umcmchandbook_fast_dmvnorm_(SEXP xSEXP, SEXP meanSEXP, SEXP covarianceSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -117,7 +82,7 @@ END_RCPP
 }
 // fast_dmvnorm_cholesky_inverse_
 NumericVector fast_dmvnorm_cholesky_inverse_(const NumericMatrix& x, const NumericVector& mean, const Eigen::MatrixXd& cholesky_inverse);
-RcppExport SEXP _unbiasedpoisson_fast_dmvnorm_cholesky_inverse_(SEXP xSEXP, SEXP meanSEXP, SEXP cholesky_inverseSEXP) {
+RcppExport SEXP _umcmchandbook_fast_dmvnorm_cholesky_inverse_(SEXP xSEXP, SEXP meanSEXP, SEXP cholesky_inverseSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -130,7 +95,7 @@ END_RCPP
 }
 // rmvnorm_max_coupling_
 Rcpp::List rmvnorm_max_coupling_(const NumericVector& mu1, const NumericVector& mu2, const NumericMatrix& Sigma1, const NumericMatrix& Sigma2);
-RcppExport SEXP _unbiasedpoisson_rmvnorm_max_coupling_(SEXP mu1SEXP, SEXP mu2SEXP, SEXP Sigma1SEXP, SEXP Sigma2SEXP) {
+RcppExport SEXP _umcmchandbook_rmvnorm_max_coupling_(SEXP mu1SEXP, SEXP mu2SEXP, SEXP Sigma1SEXP, SEXP Sigma2SEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -144,7 +109,7 @@ END_RCPP
 }
 // rmvnorm_max_coupling_cholesky
 Rcpp::List rmvnorm_max_coupling_cholesky(const NumericVector& mu1, const NumericVector& mu2, const Eigen::MatrixXd& Cholesky1, const Eigen::MatrixXd& Cholesky2, const Eigen::MatrixXd& Cholesky_inverse1, const Eigen::MatrixXd& Cholesky_inverse2);
-RcppExport SEXP _unbiasedpoisson_rmvnorm_max_coupling_cholesky(SEXP mu1SEXP, SEXP mu2SEXP, SEXP Cholesky1SEXP, SEXP Cholesky2SEXP, SEXP Cholesky_inverse1SEXP, SEXP Cholesky_inverse2SEXP) {
+RcppExport SEXP _umcmchandbook_rmvnorm_max_coupling_cholesky(SEXP mu1SEXP, SEXP mu2SEXP, SEXP Cholesky1SEXP, SEXP Cholesky2SEXP, SEXP Cholesky_inverse1SEXP, SEXP Cholesky_inverse2SEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -160,7 +125,7 @@ END_RCPP
 }
 // rmvnorm_reflection_max_coupling_
 Rcpp::List rmvnorm_reflection_max_coupling_(const Eigen::VectorXd& mu1, const Eigen::VectorXd& mu2, const Eigen::MatrixXd& Sigma_chol, const Eigen::MatrixXd& inv_Sigma_chol);
-RcppExport SEXP _unbiasedpoisson_rmvnorm_reflection_max_coupling_(SEXP mu1SEXP, SEXP mu2SEXP, SEXP Sigma_cholSEXP, SEXP inv_Sigma_cholSEXP) {
+RcppExport SEXP _umcmchandbook_rmvnorm_reflection_max_coupling_(SEXP mu1SEXP, SEXP mu2SEXP, SEXP Sigma_cholSEXP, SEXP inv_Sigma_cholSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -172,53 +137,21 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-// prune_measure_
-NumericMatrix prune_measure_(const NumericMatrix& df);
-RcppExport SEXP _unbiasedpoisson_prune_measure_(SEXP dfSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< const NumericMatrix& >::type df(dfSEXP);
-    rcpp_result_gen = Rcpp::wrap(prune_measure_(df));
-    return rcpp_result_gen;
-END_RCPP
-}
-// systematic_resampling_n_
-IntegerVector systematic_resampling_n_(const NumericVector& weights, int ndraws, double u);
-RcppExport SEXP _unbiasedpoisson_systematic_resampling_n_(SEXP weightsSEXP, SEXP ndrawsSEXP, SEXP uSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< const NumericVector& >::type weights(weightsSEXP);
-    Rcpp::traits::input_parameter< int >::type ndraws(ndrawsSEXP);
-    Rcpp::traits::input_parameter< double >::type u(uSEXP);
-    rcpp_result_gen = Rcpp::wrap(systematic_resampling_n_(weights, ndraws, u));
-    return rcpp_result_gen;
-END_RCPP
-}
-
-RcppExport SEXP _rcpp_module_boot_module_tree();
 
 static const R_CallMethodDef CallEntries[] = {
-    {"_unbiasedpoisson_c_chains_to_measure_as_list_", (DL_FUNC) &_unbiasedpoisson_c_chains_to_measure_as_list_, 3},
-    {"_unbiasedpoisson_estimator_bin_", (DL_FUNC) &_unbiasedpoisson_estimator_bin_, 7},
-    {"_unbiasedpoisson_fcprd", (DL_FUNC) &_unbiasedpoisson_fcprd, 1},
-    {"_unbiasedpoisson_cpp_prod", (DL_FUNC) &_unbiasedpoisson_cpp_prod, 2},
-    {"_unbiasedpoisson_multinomial_resampling_n_", (DL_FUNC) &_unbiasedpoisson_multinomial_resampling_n_, 2},
-    {"_unbiasedpoisson_fast_rmvnorm_", (DL_FUNC) &_unbiasedpoisson_fast_rmvnorm_, 3},
-    {"_unbiasedpoisson_fast_rmvnorm_cholesky_", (DL_FUNC) &_unbiasedpoisson_fast_rmvnorm_cholesky_, 3},
-    {"_unbiasedpoisson_fast_dmvnorm_", (DL_FUNC) &_unbiasedpoisson_fast_dmvnorm_, 3},
-    {"_unbiasedpoisson_fast_dmvnorm_cholesky_inverse_", (DL_FUNC) &_unbiasedpoisson_fast_dmvnorm_cholesky_inverse_, 3},
-    {"_unbiasedpoisson_rmvnorm_max_coupling_", (DL_FUNC) &_unbiasedpoisson_rmvnorm_max_coupling_, 4},
-    {"_unbiasedpoisson_rmvnorm_max_coupling_cholesky", (DL_FUNC) &_unbiasedpoisson_rmvnorm_max_coupling_cholesky, 6},
-    {"_unbiasedpoisson_rmvnorm_reflection_max_coupling_", (DL_FUNC) &_unbiasedpoisson_rmvnorm_reflection_max_coupling_, 4},
-    {"_unbiasedpoisson_prune_measure_", (DL_FUNC) &_unbiasedpoisson_prune_measure_, 1},
-    {"_unbiasedpoisson_systematic_resampling_n_", (DL_FUNC) &_unbiasedpoisson_systematic_resampling_n_, 3},
-    {"_rcpp_module_boot_module_tree", (DL_FUNC) &_rcpp_module_boot_module_tree, 0},
+    {"_umcmchandbook_c_chains_to_measure_as_list_", (DL_FUNC) &_umcmchandbook_c_chains_to_measure_as_list_, 3},
+    {"_umcmchandbook_estimator_bin_", (DL_FUNC) &_umcmchandbook_estimator_bin_, 7},
+    {"_umcmchandbook_fast_rmvnorm_", (DL_FUNC) &_umcmchandbook_fast_rmvnorm_, 3},
+    {"_umcmchandbook_fast_rmvnorm_cholesky_", (DL_FUNC) &_umcmchandbook_fast_rmvnorm_cholesky_, 3},
+    {"_umcmchandbook_fast_dmvnorm_", (DL_FUNC) &_umcmchandbook_fast_dmvnorm_, 3},
+    {"_umcmchandbook_fast_dmvnorm_cholesky_inverse_", (DL_FUNC) &_umcmchandbook_fast_dmvnorm_cholesky_inverse_, 3},
+    {"_umcmchandbook_rmvnorm_max_coupling_", (DL_FUNC) &_umcmchandbook_rmvnorm_max_coupling_, 4},
+    {"_umcmchandbook_rmvnorm_max_coupling_cholesky", (DL_FUNC) &_umcmchandbook_rmvnorm_max_coupling_cholesky, 6},
+    {"_umcmchandbook_rmvnorm_reflection_max_coupling_", (DL_FUNC) &_umcmchandbook_rmvnorm_reflection_max_coupling_, 4},
     {NULL, NULL, 0}
 };
 
-RcppExport void R_init_unbiasedpoisson(DllInfo *dll) {
+RcppExport void R_init_umcmchandbook(DllInfo *dll) {
     R_registerRoutines(dll, NULL, CallEntries, NULL, NULL);
     R_useDynamicSymbols(dll, FALSE);
 }

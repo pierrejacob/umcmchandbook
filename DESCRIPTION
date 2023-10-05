@@ -11,4 +11,4 @@ Depends: Rcpp, RcppEigen, tictoc
 Imports: Rcpp (>= 1.0.7), RcppEigen
 Encoding: UTF-8
 LinkingTo: Rcpp, RcppEigen
-RoxygenNote: 7.2.1
+RoxygenNote: 7.2.3

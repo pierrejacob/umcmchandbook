@@ -30,8 +30,8 @@ sample_unbiasedvar_reservoir <- function(single_kernel, coupled_kernel, rinit, h
   ## if natoms is a vector, run algorithm with R=max(natoms)
   natoms <- sort(natoms)
   natoms_max <- natoms[length(natoms)]
-  run1 <- unbiasedpoisson:::sample_coupled_chains_and_fish(single_kernel, coupled_kernel, rinit, h = h, k = k, m = m, lag = lag, x_0 = x_0, natoms = natoms_max, max_iterations = max_iterations)
-  run2 <- unbiasedpoisson:::sample_coupled_chains_and_fish(single_kernel, coupled_kernel, rinit, h = h, k = k, m = m, lag = lag, x_0 = x_0, natoms = natoms_max, max_iterations = max_iterations)
+  run1 <- umcmchandbook:::sample_coupled_chains_and_fish(single_kernel, coupled_kernel, rinit, h = h, k = k, m = m, lag = lag, x_0 = x_0, natoms = natoms_max, max_iterations = max_iterations)
+  run2 <- umcmchandbook:::sample_coupled_chains_and_fish(single_kernel, coupled_kernel, rinit, h = h, k = k, m = m, lag = lag, x_0 = x_0, natoms = natoms_max, max_iterations = max_iterations)
   ## estimator of pi(h^2) as average of two estimators
   pi_hsquared_ <- (1/2)*(run1$uestimator_h2 + run2$uestimator_h2)
   ## estimator of pi(h)^2 as product of two independent estimators of pi(h)
