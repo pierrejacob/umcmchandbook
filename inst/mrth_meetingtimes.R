@@ -94,33 +94,33 @@ gtraj <- gridExtra::grid.arrange(g, gshift, ghistmeet, nrow = 1)
 ggsave(filename = "mrth.laggedchains.pdf", plot = gtraj, width = 15, height = 5)
 
 
-set.seed(1)
-lags <- c(10, 20, 50, 500)
-meetingtimes <- list()
-nrep <- 1e4
-for (il in 1:length(lags)){
-  meetingtimes[[il]] <-  as.numeric(foreach(irep = 1:nrep, .combine = c) %dorng% {
-    sample_meetingtime(single_kernel_mrth, coupled_kernel_mrth, rinit_mrth, lag = lags[il])$meetingtime
-  })
-}
-
-tvbounds.df <- data.frame()
-niterations <- 500
-for (il in 1:length(lags)){
-  ubounds_mrth <- sapply(1:niterations, function(t) tv_upper_bound(meetingtimes[[il]], lags[il], t))
-  tvbounds.df <- rbind(tvbounds.df, data.frame(iteration = 1:niterations, ubounds = ubounds_mrth, lag = lags[il]))
-}
-
-g_tvbounds <- ggplot(tvbounds.df, aes(x = iteration, y = ubounds, group = lag, linetype = factor(lag))) + geom_line() +
-  scale_linetype(name = "lag")
-g_tvbounds <- g_tvbounds + xlab("Iteration") + ylab("Distance to stationarity")
-g_tvbounds <- g_tvbounds + theme(legend.key.width = unit(2, 'cm'))
-g_tvbounds
-ggsave(filename = "mrth.tvboundslinear.pdf", plot = g_tvbounds, width = 8, height = 6)
-
-g_tvboundslog <- g_tvbounds + scale_y_log10()
-ggsave(filename = "mrth.tvboundslog.pdf", plot = g_tvboundslog, width = 8, height = 6)
-
-g = gridExtra::grid.arrange(g_tvbounds, g_tvboundslog, nrow = 1)
-ggsave(filename = "mrth.tvbounds.pdf", plot = g, width = 15, height = 5)
+# set.seed(1)
+# lags <- c(10, 20, 50, 500)
+# meetingtimes <- list()
+# nrep <- 1e4
+# for (il in 1:length(lags)){
+#   meetingtimes[[il]] <-  as.numeric(foreach(irep = 1:nrep, .combine = c) %dorng% {
+#     sample_meetingtime(single_kernel_mrth, coupled_kernel_mrth, rinit_mrth, lag = lags[il])$meetingtime
+#   })
+# }
+# 
+# tvbounds.df <- data.frame()
+# niterations <- 500
+# for (il in 1:length(lags)){
+#   ubounds_mrth <- sapply(1:niterations, function(t) tv_upper_bound(meetingtimes[[il]], lags[il], t))
+#   tvbounds.df <- rbind(tvbounds.df, data.frame(iteration = 1:niterations, ubounds = ubounds_mrth, lag = lags[il]))
+# }
+# 
+# g_tvbounds <- ggplot(tvbounds.df, aes(x = iteration, y = ubounds, group = lag, linetype = factor(lag))) + geom_line() +
+#   scale_linetype(name = "lag")
+# g_tvbounds <- g_tvbounds + xlab("Iteration") + ylab("Distance to stationarity")
+# g_tvbounds <- g_tvbounds + theme(legend.key.width = unit(2, 'cm'))
+# g_tvbounds
+# ggsave(filename = "mrth.tvboundslinear.pdf", plot = g_tvbounds, width = 8, height = 6)
+# 
+# g_tvboundslog <- g_tvbounds + scale_y_log10()
+# ggsave(filename = "mrth.tvboundslog.pdf", plot = g_tvboundslog, width = 8, height = 6)
+# 
+# g = gridExtra::grid.arrange(g_tvbounds, g_tvboundslog, nrow = 1)
+# ggsave(filename = "mrth.tvbounds.pdf", plot = g, width = 15, height = 5)
 

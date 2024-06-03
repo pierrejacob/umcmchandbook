@@ -4,6 +4,7 @@
 .RData
 .Rbuildignore
 .Ruserdata
+*.png
 *.pdf
 src/*.o
 src/*.so
